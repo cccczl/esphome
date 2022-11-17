@@ -93,5 +93,3 @@ async def to_code(config):
             rhs.extend([HexInt(x), HexInt(x), HexInt(x)])
         prog_arr = cg.progmem_array(config[CONF_RAW_DATA_ID], rhs)
         cg.add(var.set_palette(prog_arr))
-    else:
-        pass

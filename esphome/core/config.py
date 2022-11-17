@@ -93,9 +93,7 @@ def valid_project_name(value: str):
     if value.count(".") != 1:
         raise cv.Invalid("project name needs to have a namespace")
 
-    value = value.replace(" ", "_")
-
-    return value
+    return value.replace(" ", "_")
 
 
 def validate_version(value: str):

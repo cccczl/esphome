@@ -20,9 +20,8 @@ def validate_id(config):
     if CONF_CAN_ID in config:
         id_value = config[CONF_CAN_ID]
         id_ext = config[CONF_USE_EXTENDED_ID]
-        if not id_ext:
-            if id_value > 0x7FF:
-                raise cv.Invalid("Standard IDs must be 11 Bit (0x000-0x7ff / 0-2047)")
+        if not id_ext and id_value > 0x7FF:
+            raise cv.Invalid("Standard IDs must be 11 Bit (0x000-0x7ff / 0-2047)")
     return config
 
 

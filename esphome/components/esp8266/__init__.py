@@ -225,12 +225,7 @@ async def to_code(config):
         if ver <= cv.Version(2, 3, 0):
             # No ld script support
             ld_script = None
-        if ver <= cv.Version(2, 4, 2):
-            # Old ld script path
-            ld_script = ld_scripts[0]
-        else:
-            ld_script = ld_scripts[1]
-
+        ld_script = ld_scripts[0] if ver <= cv.Version(2, 4, 2) else ld_scripts[1]
         if ld_script is not None:
             cg.add_platformio_option("board_build.ldscript", ld_script)
 

@@ -69,9 +69,11 @@ def choose_prompt(options):
 
 
 def choose_upload_log_host(default, check_default, show_ota, show_mqtt, show_api):
-    options = []
-    for port in get_serial_ports():
-        options.append((f"{port.path} ({port.description})", port.path))
+    options = [
+        (f"{port.path} ({port.description})", port.path)
+        for port in get_serial_ports()
+    ]
+
     if (show_ota and "ota" in CORE.config) or (show_api and "api" in CORE.config):
         options.append((f"Over The Air ({CORE.address})", CORE.address))
         if default == "OTA":
@@ -90,9 +92,7 @@ def choose_upload_log_host(default, check_default, show_ota, show_mqtt, show_api
 def get_port_type(port):
     if port.startswith("/") or port.startswith("COM"):
         return "SERIAL"
-    if port == "MQTT":
-        return "MQTT"
-    return "NETWORK"
+    return "MQTT" if port == "MQTT" else "NETWORK"
 
 
 def run_miniterm(config, port):
@@ -515,11 +515,11 @@ def command_rename(args, config):
             raw_contents,
         )
     else:
-        old_name = yaml[CONF_SUBSTITUTIONS][match.group(1)]
+        old_name = yaml[CONF_SUBSTITUTIONS][match[1]]
         if (
             len(
                 re.findall(
-                    rf"^\s+{match.group(1)}:\s+[\"']?{old_name}[\"']?",
+                    f"""^\s+{match[1]}:\s+[\"']?{old_name}[\"']?""",
                     raw_contents,
                     flags=re.MULTILINE,
                 )
@@ -530,13 +530,14 @@ def command_rename(args, config):
             return 1
 
         new_raw = re.sub(
-            rf"^(\s+{match.group(1)}):\s+[\"']?{old_name}[\"']?",
+            f"""^(\s+{match[1]}):\s+[\"']?{old_name}[\"']?""",
             f'\\1: "{args.name}"',
             raw_contents,
             flags=re.MULTILINE,
         )
 
-    new_path = os.path.join(CORE.config_dir, args.name + ".yaml")
+
+    new_path = os.path.join(CORE.config_dir, f"{args.name}.yaml")
     print(
         f"Updating {color(Fore.CYAN, CORE.config_path)} to {color(Fore.CYAN, new_path)}"
     )
@@ -850,11 +851,9 @@ def parse_args(argv):
             for arg in unparsed
         ]
         arguments = (
-            arguments[0:last_option]
-            + [result.command]
-            + result.configuration
-            + unparsed
-        )
+            (arguments[:last_option] + [result.command]) + result.configuration
+        ) + unparsed
+
         deprecated_argv_suggestion = arguments
     except argparse.ArgumentError:
         # old-style parsing failed, don't suggest any argument

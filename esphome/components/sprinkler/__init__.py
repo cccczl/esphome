@@ -95,13 +95,15 @@ def validate_sprinkler(config):
                     )
 
         if (
-            CONF_PUMP_SWITCH_OFF_DURING_VALVE_OPEN_DELAY in sprinkler_controller
+            CONF_PUMP_SWITCH_OFF_DURING_VALVE_OPEN_DELAY
+            in sprinkler_controller
             and CONF_VALVE_OPEN_DELAY not in sprinkler_controller
-        ):
-            if sprinkler_controller[CONF_PUMP_SWITCH_OFF_DURING_VALVE_OPEN_DELAY]:
-                raise cv.Invalid(
-                    f"{CONF_VALVE_OPEN_DELAY} must be defined when {CONF_PUMP_SWITCH_OFF_DURING_VALVE_OPEN_DELAY} is enabled"
-                )
+        ) and sprinkler_controller[
+            CONF_PUMP_SWITCH_OFF_DURING_VALVE_OPEN_DELAY
+        ]:
+            raise cv.Invalid(
+                f"{CONF_VALVE_OPEN_DELAY} must be defined when {CONF_PUMP_SWITCH_OFF_DURING_VALVE_OPEN_DELAY} is enabled"
+            )
 
         for valve in sprinkler_controller[CONF_VALVES]:
             if (
@@ -127,8 +129,9 @@ def validate_sprinkler(config):
                 raise cv.Invalid(
                     f"Both {CONF_PUMP_OFF_SWITCH_ID} and {CONF_PUMP_ON_SWITCH_ID} must be specified for latching pump configuration"
                 )
-            if CONF_PUMP_SWITCH_ID in valve and (
-                CONF_PUMP_OFF_SWITCH_ID in valve or CONF_PUMP_ON_SWITCH_ID in valve
+            if (
+                CONF_PUMP_SWITCH_ID in valve
+                and CONF_PUMP_OFF_SWITCH_ID in valve
             ):
                 raise cv.Invalid(
                     f"Do not specify {CONF_PUMP_OFF_SWITCH_ID} or {CONF_PUMP_ON_SWITCH_ID} when using {CONF_PUMP_SWITCH_ID}"
@@ -149,8 +152,9 @@ def validate_sprinkler(config):
                 raise cv.Invalid(
                     f"Both {CONF_VALVE_OFF_SWITCH_ID} and {CONF_VALVE_ON_SWITCH_ID} must be specified for latching valve configuration"
                 )
-            if CONF_VALVE_SWITCH_ID in valve and (
-                CONF_VALVE_OFF_SWITCH_ID in valve or CONF_VALVE_ON_SWITCH_ID in valve
+            if (
+                CONF_VALVE_SWITCH_ID in valve
+                and CONF_VALVE_OFF_SWITCH_ID in valve
             ):
                 raise cv.Invalid(
                     f"Do not specify {CONF_VALVE_OFF_SWITCH_ID} or {CONF_VALVE_ON_SWITCH_ID} when using {CONF_VALVE_SWITCH_ID}"

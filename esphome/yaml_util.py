@@ -44,9 +44,12 @@ class ESPHomeDataBase:
     def from_node(self, node):
         # pylint: disable=attribute-defined-outside-init
         self._esp_range = DocumentRange.from_marks(node.start_mark, node.end_mark)
-        if isinstance(node, yaml.ScalarNode):
-            if node.style is not None and node.style in "|>":
-                self._content_offset = 1
+        if (
+            isinstance(node, yaml.ScalarNode)
+            and node.style is not None
+            and node.style in "|>"
+        ):
+            self._content_offset = 1
 
     def from_database(self, database):
         # pylint: disable=attribute-defined-outside-init
@@ -408,8 +411,7 @@ def _find_files(directory, pattern):
         dirs[:] = [d for d in dirs if _is_file_valid(d)]
         for basename in files:
             if _is_file_valid(basename) and fnmatch.fnmatch(basename, pattern):
-                filename = os.path.join(root, basename)
-                yield filename
+                yield os.path.join(root, basename)
 
 
 def is_secret(value):
@@ -431,9 +433,9 @@ class ESPHomeDumper(yaml.SafeDumper):  # pylint: disable=too-many-ancestors
         for item_key, item_value in mapping:
             node_key = self.represent_data(item_key)
             node_value = self.represent_data(item_value)
-            if not (isinstance(node_key, yaml.ScalarNode) and not node_key.style):
+            if not isinstance(node_key, yaml.ScalarNode) or node_key.style:
                 best_style = False
-            if not (isinstance(node_value, yaml.ScalarNode) and not node_value.style):
+            if not isinstance(node_value, yaml.ScalarNode) or node_value.style:
                 best_style = False
             value.append((node_key, node_value))
         if flow_style is None:
@@ -472,7 +474,7 @@ class ESPHomeDumper(yaml.SafeDumper):  # pylint: disable=too-many-ancestors
         elif math.isinf(value):
             value = ".inf" if value > 0 else "-.inf"
         else:
-            value = str(repr(value)).lower()
+            value = repr(value).lower()
             # Note that in some cases `repr(data)` represents a float number
             # without the decimal parts.  For instance:
             #   >>> repr(1e17)

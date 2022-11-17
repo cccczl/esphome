@@ -58,8 +58,7 @@ def validate_type(value):
         raise cv.Invalid("Must have G in type")
     if "B" not in value:
         raise cv.Invalid("Must have B in type")
-    rest = set(value) - set("RGBW")
-    if rest:
+    if rest := set(value) - set("RGBW"):
         raise cv.Invalid(f"Type has invalid color: {', '.join(rest)}")
     if len(set(value)) != len(value):
         raise cv.Invalid("Type has duplicate color!")
@@ -74,8 +73,8 @@ def _choose_default_method(config):
         config[CONF_METHOD] = _validate_method(METHOD_SPI)
         return config
 
-    pin = config[CONF_PIN]
     if CORE.is_esp8266:
+        pin = config[CONF_PIN]
         if pin == 3:
             config[CONF_METHOD] = _validate_method(METHOD_ESP8266_DMA)
         elif pin == 1:

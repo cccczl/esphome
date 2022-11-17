@@ -344,9 +344,7 @@ def ensure_list(*validators):
         check_not_templatable(value)
         if value is None or (isinstance(value, dict) and not value):
             return []
-        if not isinstance(value, list):
-            return [user(value)]
-        return list_schema(value)
+        return list_schema(value) if isinstance(value, list) else [user(value)]
 
     return validator
 
@@ -373,9 +371,7 @@ def int_(value):
             f"This option only accepts integers with no fractional part. Please remove the fractional part from {value}"
         )
     value = string_strict(value).lower()
-    base = 10
-    if value.startswith("0x"):
-        base = 16
+    base = 16 if value.startswith("0x") else 10
     try:
         return int(value, base)
     except ValueError:
@@ -510,9 +506,7 @@ def templatable(other_validators):
 
         if isinstance(value, Lambda):
             return returning_lambda(value)
-        if isinstance(other_validators, dict):
-            return schema(value)
-        return schema(value)
+        return schema(value) if isinstance(other_validators, dict) else schema(value)
 
     return validator
 
@@ -561,7 +555,7 @@ def has_at_least_one_key(*keys):
         if not isinstance(obj, dict):
             raise Invalid("expected dictionary")
 
-        if not any(k in keys for k in obj):
+        if all(k not in keys for k in obj):
             raise Invalid(f"Must contain at least one of {', '.join(keys)}.")
         return obj
 
@@ -608,7 +602,7 @@ def has_none_or_all_keys(*keys):
             raise Invalid("expected dictionary")
 
         number = sum(k in keys for k in obj)
-        if number != 0 and number != len(keys):
+        if number not in [0, len(keys)]:
             raise Invalid(f"Must specify either none or all of {', '.join(keys)}.")
         return obj
 
@@ -694,9 +688,9 @@ def time_period_str_unit(value):
 
     if match is None:
         raise Invalid(f"Expected time period with unit, got {value}")
-    kwarg = unit_to_kwarg[one_of(*unit_to_kwarg)(match.group(2))]
+    kwarg = unit_to_kwarg[one_of(*unit_to_kwarg)(match[2])]
 
-    return TimePeriod(**{kwarg: float(match.group(1))})
+    return TimePeriod(**{kwarg: float(match[1])})
 
 
 def time_period_in_milliseconds_(value):
@@ -844,11 +838,11 @@ def float_with_unit(quantity, regex_suffix, optional_unit=False):
         if match is None:
             raise Invalid(f"Expected {quantity} with unit, got {value}")
 
-        mantissa = float(match.group(1))
-        if match.group(2) not in METRIC_SUFFIXES:
-            raise Invalid(f"Invalid {quantity} suffix {match.group(2)}")
+        mantissa = float(match[1])
+        if match[2] not in METRIC_SUFFIXES:
+            raise Invalid(f"Invalid {quantity} suffix {match[2]}")
 
-        multiplier = METRIC_SUFFIXES[match.group(2)]
+        multiplier = METRIC_SUFFIXES[match[2]]
         return mantissa * multiplier
 
     return validator
@@ -911,14 +905,15 @@ def validate_bytes(value):
     if match is None:
         raise Invalid(f"Expected number of bytes with unit, got {value}")
 
-    mantissa = int(match.group(1))
-    if match.group(2) not in METRIC_SUFFIXES:
-        raise Invalid(f"Invalid metric suffix {match.group(2)}")
-    multiplier = METRIC_SUFFIXES[match.group(2)]
+    mantissa = int(match[1])
+    if match[2] not in METRIC_SUFFIXES:
+        raise Invalid(f"Invalid metric suffix {match[2]}")
+    multiplier = METRIC_SUFFIXES[match[2]]
     if multiplier < 1:
         raise Invalid(
-            f"Only suffixes with positive exponents are supported. Got {match.group(2)}"
+            f"Only suffixes with positive exponents are supported. Got {match[2]}"
         )
+
     return int(mantissa * multiplier)
 
 
@@ -1035,9 +1030,7 @@ def publish_topic(value):
 
 
 def mqtt_payload(value):
-    if value is None:
-        return ""
-    return string(value)
+    return "" if value is None else string(value)
 
 
 def mqtt_qos(value):
@@ -1286,12 +1279,12 @@ def dimensions(value):
             raise Invalid("Width and height must at least be 1")
         return [width, height]
     value = string(value)
-    match = re.match(r"\s*([0-9]+)\s*[xX]\s*([0-9]+)\s*", value)
-    if not match:
+    if match := re.match(r"\s*([0-9]+)\s*[xX]\s*([0-9]+)\s*", value):
+        return dimensions([match[1], match[2]])
+    else:
         raise Invalid(
             "Invalid value '{}' for dimensions. Only WIDTHxHEIGHT is allowed."
         )
-    return dimensions([match.group(1), match.group(2)])
 
 
 def directory(value):
@@ -1454,10 +1447,11 @@ class SplitDefault(Optional):
     def default(self):
         if CORE.is_esp8266:
             return self._esp8266_default
-        if CORE.is_esp32 and CORE.using_arduino:
-            return self._esp32_arduino_default
-        if CORE.is_esp32 and CORE.using_esp_idf:
-            return self._esp32_idf_default
+        if CORE.is_esp32:
+            if CORE.using_arduino:
+                return self._esp32_arduino_default
+            if CORE.using_esp_idf:
+                return self._esp32_idf_default
         raise NotImplementedError
 
     @default.setter
@@ -1501,9 +1495,7 @@ def _entity_base_validator(config):
 
 
 def ensure_schema(schema):
-    if not isinstance(schema, vol.Schema):
-        return Schema(schema)
-    return schema
+    return schema if isinstance(schema, vol.Schema) else Schema(schema)
 
 
 def validate_registry_entry(name, registry):

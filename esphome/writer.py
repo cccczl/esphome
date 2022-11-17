@@ -104,9 +104,7 @@ def storage_should_clean(old: StorageJSON, new: StorageJSON) -> bool:
 
     if old.src_version != new.src_version:
         return True
-    if old.build_path != new.build_path:
-        return True
-    return False
+    return old.build_path != new.build_path
 
 
 def update_storage_json():
@@ -233,15 +231,14 @@ def copy_src_tree():
         Path(x.package.replace(".", "/") + "/" + x.resource): x for x in source_files
     }
 
-    # Convert to list and sort
-    source_files_l = list(source_files_map.items())
-    source_files_l.sort()
-
+    source_files_l = sorted(source_files_map.items())
     # Build #include list for esphome.h
-    include_l = []
-    for target, _ in source_files_l:
-        if target.suffix in HEADER_FILE_EXTENSIONS:
-            include_l.append(f'#include "{target}"')
+    include_l = [
+        f'#include "{target}"'
+        for target, _ in source_files_l
+        if target.suffix in HEADER_FILE_EXTENSIONS
+    ]
+
     include_l.append("")
     include_s = "\n".join(include_l)
 
@@ -304,12 +301,10 @@ def generate_defines_h():
 
 
 def generate_version_h():
-    match = re.match(r"^(\d+)\.(\d+).(\d+)-?\w*$", __version__)
-    if not match:
+    if match := re.match(r"^(\d+)\.(\d+).(\d+)-?\w*$", __version__):
+        return VERSION_H_FORMAT.format(__version__, match[1], match[2], match[3])
+    else:
         raise EsphomeError(f"Could not parse version {__version__}.")
-    return VERSION_H_FORMAT.format(
-        __version__, match.group(1), match.group(2), match.group(3)
-    )
 
 
 def write_cpp(code_s):

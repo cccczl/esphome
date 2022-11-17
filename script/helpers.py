@@ -32,8 +32,8 @@ def build_all_include():
     # Build a cpp file that includes all header files in this repo.
     # Otherwise header-only integrations would not be tested by clang-tidy
     headers = []
+    filetypes = (".h",)
     for path in walk_files(basepath):
-        filetypes = (".h",)
         ext = os.path.splitext(path)[1]
         if ext in filetypes:
             path = os.path.relpath(path, root_path)
@@ -103,8 +103,7 @@ def filter_changed(files):
 def filter_grep(files, value):
     matched = []
     for file in files:
-        with open(file) as handle:
-            contents = handle.read()
+        contents = Path(file).read_text()
         if value in contents:
             matched.append(file)
     return matched

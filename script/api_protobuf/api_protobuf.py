@@ -17,6 +17,7 @@ then run this script with python3 and the files
 will be generated, they still need to be formatted
 """
 
+
 import re
 from pathlib import Path
 from textwrap import dedent
@@ -28,8 +29,10 @@ from subprocess import call
 import api_options_pb2 as pb
 import google.protobuf.descriptor_pb2 as descriptor
 
-file_header = "// This file was automatically generated with a tool.\n"
-file_header += "// See scripts/api_protobuf/api_protobuf.py\n"
+file_header = (
+    "// This file was automatically generated with a tool.\n"
+    + "// See scripts/api_protobuf/api_protobuf.py\n"
+)
 
 cwd = Path(__file__).resolve().parent
 root = cwd.parent.parent / "esphome" / "components" / "api"
@@ -211,7 +214,7 @@ class DoubleType(TypeInfo):
 
     def dump(self, name):
         o = f'sprintf(buffer, "%g", {name});\n'
-        o += f"out.append(buffer);"
+        o += "out.append(buffer);"
         return o
 
 
@@ -224,7 +227,7 @@ class FloatType(TypeInfo):
 
     def dump(self, name):
         o = f'sprintf(buffer, "%g", {name});\n'
-        o += f"out.append(buffer);"
+        o += "out.append(buffer);"
         return o
 
 
@@ -237,7 +240,7 @@ class Int64Type(TypeInfo):
 
     def dump(self, name):
         o = f'sprintf(buffer, "%lld", {name});\n'
-        o += f"out.append(buffer);"
+        o += "out.append(buffer);"
         return o
 
 
@@ -250,7 +253,7 @@ class UInt64Type(TypeInfo):
 
     def dump(self, name):
         o = f'sprintf(buffer, "%llu", {name});\n'
-        o += f"out.append(buffer);"
+        o += "out.append(buffer);"
         return o
 
 
@@ -263,7 +266,7 @@ class Int32Type(TypeInfo):
 
     def dump(self, name):
         o = f'sprintf(buffer, "%d", {name});\n'
-        o += f"out.append(buffer);"
+        o += "out.append(buffer);"
         return o
 
 
@@ -276,7 +279,7 @@ class Fixed64Type(TypeInfo):
 
     def dump(self, name):
         o = f'sprintf(buffer, "%llu", {name});\n'
-        o += f"out.append(buffer);"
+        o += "out.append(buffer);"
         return o
 
 
@@ -289,7 +292,7 @@ class Fixed32Type(TypeInfo):
 
     def dump(self, name):
         o = f'sprintf(buffer, "%u", {name});\n'
-        o += f"out.append(buffer);"
+        o += "out.append(buffer);"
         return o
 
 
@@ -301,8 +304,7 @@ class BoolType(TypeInfo):
     encode_func = "encode_bool"
 
     def dump(self, name):
-        o = f"out.append(YESNO({name}));"
-        return o
+        return f"out.append(YESNO({name}));"
 
 
 @register_type(9)
@@ -315,8 +317,7 @@ class StringType(TypeInfo):
     encode_func = "encode_string"
 
     def dump(self, name):
-        o = f'out.append("\'").append({name}).append("\'");'
-        return o
+        return f"""out.append("\'").append({name}).append("\'");"""
 
 
 @register_type(11)
@@ -344,8 +345,7 @@ class MessageType(TypeInfo):
         return f"value.as_message<{self.cpp_type}>()"
 
     def dump(self, name):
-        o = f"{name}.dump_to(out);"
-        return o
+        return f"{name}.dump_to(out);"
 
 
 @register_type(12)
@@ -358,8 +358,7 @@ class BytesType(TypeInfo):
     encode_func = "encode_string"
 
     def dump(self, name):
-        o = f'out.append("\'").append({name}).append("\'");'
-        return o
+        return f"""out.append("\'").append({name}).append("\'");"""
 
 
 @register_type(13)
@@ -371,7 +370,7 @@ class UInt32Type(TypeInfo):
 
     def dump(self, name):
         o = f'sprintf(buffer, "%u", {name});\n'
-        o += f"out.append(buffer);"
+        o += "out.append(buffer);"
         return o
 
 
@@ -392,8 +391,7 @@ class EnumType(TypeInfo):
         return f"encode_enum<{self.cpp_type}>"
 
     def dump(self, name):
-        o = f"out.append(proto_enum_to_string<{self.cpp_type}>({name}));"
-        return o
+        return f"out.append(proto_enum_to_string<{self.cpp_type}>({name}));"
 
 
 @register_type(15)
@@ -405,7 +403,7 @@ class SFixed32Type(TypeInfo):
 
     def dump(self, name):
         o = f'sprintf(buffer, "%d", {name});\n'
-        o += f"out.append(buffer);"
+        o += "out.append(buffer);"
         return o
 
 
@@ -418,7 +416,7 @@ class SFixed64Type(TypeInfo):
 
     def dump(self, name):
         o = f'sprintf(buffer, "%lld", {name});\n'
-        o += f"out.append(buffer);"
+        o += "out.append(buffer);"
         return o
 
 
@@ -431,7 +429,7 @@ class SInt32Type(TypeInfo):
 
     def dump(self, name):
         o = f'sprintf(buffer, "%d", {name});\n'
-        o += f"out.append(buffer);"
+        o += "out.append(buffer);"
         return o
 
 
@@ -444,7 +442,7 @@ class SInt64Type(TypeInfo):
 
     def dump(self, name):
         o = f'sprintf(buffer, "%lld", {name});\n'
-        o += f"out.append(buffer);"
+        o += "out.append(buffer);"
         return o
 
 
@@ -526,7 +524,7 @@ class RepeatedTypeInfo(TypeInfo):
     def encode_content(self):
         o = f"for (auto {'' if self._ti_is_bool else '&'}it : this->{self.field_name}) {{\n"
         o += f"  buffer.{self._ti.encode_func}({self.number}, it, true);\n"
-        o += f"}}"
+        o += "}}"
         return o
 
     @property
@@ -633,7 +631,7 @@ def build_message_type(desc):
 
     o = f"void {desc.name}::encode(ProtoWriteBuffer buffer) const {{"
     if encode:
-        if len(encode) == 1 and len(encode[0]) + len(o) + 3 < 120:
+        if len(encode) == 1 and len(encode[0]) + len(o) < 117:
             o += f" {encode[0]} "
         else:
             o += "\n"
@@ -645,7 +643,7 @@ def build_message_type(desc):
 
     o = f"void {desc.name}::dump_to(std::string &out) const {{"
     if dump:
-        if len(dump) == 1 and len(dump[0]) + len(o) + 3 < 120:
+        if len(dump) == 1 and len(dump[0]) + len(o) < 117:
             o += f" {dump[0]} "
         else:
             o += "\n"
@@ -655,7 +653,7 @@ def build_message_type(desc):
             o += f'  out.append("}}");\n'
     else:
         o2 = f'out.append("{desc.name} {{}}");'
-        if len(o) + len(o2) + 3 < 120:
+        if len(o) + len(o2) < 117:
             o += f" {o2} "
         else:
             o += "\n"
@@ -664,8 +662,11 @@ def build_message_type(desc):
     cpp += f"#ifdef HAS_PROTO_MESSAGE_DUMP\n"
     cpp += o
     cpp += f"#endif\n"
-    prot = "#ifdef HAS_PROTO_MESSAGE_DUMP\n"
-    prot += "void dump_to(std::string &out) const override;\n"
+    prot = (
+        "#ifdef HAS_PROTO_MESSAGE_DUMP\n"
+        + "void dump_to(std::string &out) const override;\n"
+    )
+
     prot += "#endif\n"
     public_content.append(prot)
 
@@ -675,7 +676,7 @@ def build_message_type(desc):
     out += "\n"
     out += " protected:\n"
     out += indent("\n".join(protected_content))
-    if len(protected_content) > 0:
+    if protected_content:
         out += "\n"
     out += "};\n"
     return out, cpp
@@ -748,9 +749,11 @@ ifdefs = {}
 
 
 def get_opt(desc, opt, default=None):
-    if not desc.options.HasExtension(opt):
-        return default
-    return desc.options.Extensions[opt]
+    return (
+        desc.options.Extensions[opt]
+        if desc.options.HasExtension(opt)
+        else default
+    )
 
 
 def build_service_message_type(mt):
@@ -845,8 +848,7 @@ for mt in file.message_type:
     hpp += indent(hout) + "\n"
     cpp += cout
 
-cases = list(RECEIVE_CASES.items())
-cases.sort()
+cases = sorted(RECEIVE_CASES.items())
 hpp += " protected:\n"
 hpp += f"  bool read_message(uint32_t msg_size, uint32_t msg_type, uint8_t *msg_data) override;\n"
 out = f"bool {class_name}::read_message(uint32_t msg_size, uint32_t msg_type, uint8_t *msg_data) {{\n"
@@ -854,7 +856,7 @@ out += f"  switch (msg_type) {{\n"
 for i, case in cases:
     c = f"case {i}: {{\n"
     c += indent(case) + "\n"
-    c += f"}}"
+    c += "}}"
     out += indent(c, "    ") + "\n"
 out += "    default:\n"
 out += "      return false;\n"

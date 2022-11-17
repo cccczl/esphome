@@ -40,9 +40,7 @@ class HexInt(int):
         value = self
         sign = "-" if value < 0 else ""
         value = abs(value)
-        if 0 <= value <= 255:
-            return f"{sign}0x{value:02X}"
-        return f"{sign}0x{value:X}"
+        return f"{sign}0x{value:02X}" if 0 <= value <= 255 else f"{sign}0x{value:X}"
 
 
 class IPAddress:
@@ -73,9 +71,7 @@ class MACAddress:
 
 
 def is_approximately_integer(value):
-    if isinstance(value, int):
-        return True
-    return abs(value - round(value)) < 0.001
+    return True if isinstance(value, int) else abs(value - round(value)) < 0.001
 
 
 class TimePeriod:
@@ -128,12 +124,13 @@ class TimePeriod:
         else:
             self.milliseconds = None
 
-        if microseconds is not None:
-            if not is_approximately_integer(microseconds):
-                raise ValueError("Maximum precision is microseconds")
-            self.microseconds = int(round(microseconds))
-        else:
+        if microseconds is None:
             self.microseconds = None
+
+        elif not is_approximately_integer(microseconds):
+            raise ValueError("Maximum precision is microseconds")
+        else:
+            self.microseconds = int(round(microseconds))
 
     def as_dict(self):
         out = OrderedDict()
@@ -162,9 +159,7 @@ class TimePeriod:
             return f"{self.total_minutes}min"
         if self.hours is not None:
             return f"{self.total_hours}h"
-        if self.days is not None:
-            return f"{self.total_days}d"
-        return "0s"
+        return f"{self.total_days}d" if self.days is not None else "0s"
 
     def __repr__(self):
         return f"TimePeriod<{self.total_microseconds}>"
@@ -246,10 +241,7 @@ LAMBDA_PROG = re.compile(r"id\(\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\)(\.?)")
 class Lambda:
     def __init__(self, value):
         # pylint: disable=protected-access
-        if isinstance(value, Lambda):
-            self._value = value._value
-        else:
-            self._value = value
+        self._value = value._value if isinstance(value, Lambda) else value
         self._parts = None
         self._requires_ids = None
 
@@ -257,9 +249,7 @@ class Lambda:
     def comment_remover(self, text):
         def replacer(match):
             s = match.group(0)
-            if s.startswith("/"):
-                return " "  # note: a space and not an empty string
-            return s
+            return " " if s.startswith("/") else s
 
         pattern = re.compile(
             r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"',
@@ -301,10 +291,7 @@ class Lambda:
 class ID:
     def __init__(self, id, is_declaration=False, type=None, is_manual=None):
         self.id = id
-        if is_manual is None:
-            self.is_manual = id is not None
-        else:
-            self.is_manual = is_manual
+        self.is_manual = id is not None if is_manual is None else is_manual
         self.is_declaration = is_declaration
         self.type: Optional["MockObjClass"] = type
 
@@ -319,9 +306,7 @@ class ID:
         return self.id
 
     def __str__(self):
-        if self.id is None:
-            return ""
-        return self.id
+        return "" if self.id is None else self.id
 
     def __repr__(self):
         return (
@@ -330,9 +315,7 @@ class ID:
         )
 
     def __eq__(self, other):
-        if isinstance(other, ID):
-            return self.id == other.id
-        return NotImplemented
+        return self.id == other.id if isinstance(other, ID) else NotImplemented
 
     def __hash__(self):
         return hash(self.id)
@@ -422,13 +405,12 @@ class Library:
     @property
     def as_lib_dep(self):
         if self.repository is not None:
-            if self.name is not None:
-                return f"{self.name}={self.repository}"
-            return self.repository
+            if self.name is None:
+                return self.repository
 
-        if self.version is None:
-            return self.name
-        return f"{self.name}@{self.version}"
+            else:
+                return f"{self.name}={self.repository}"
+        return self.name if self.version is None else f"{self.name}@{self.version}"
 
     @property
     def as_tuple(self):
@@ -691,9 +673,7 @@ class EsphomeCore:
     def add_define(self, define):
         if isinstance(define, str):
             define = Define(define)
-        elif isinstance(define, Define):
-            pass
-        else:
+        elif not isinstance(define, Define):
             raise ValueError(
                 f"Define {define} must be string or Define, not {type(define)}"
             )

@@ -99,7 +99,7 @@ class RedirectText:
         if filter_lines is None:
             self._filter_pattern = None
         else:
-            pattern = r"|".join(r"(?:" + pattern + r")" for pattern in filter_lines)
+            pattern = r"|".join(f"(?:{pattern})" for pattern in filter_lines)
             self._filter_pattern = re.compile(pattern)
         self._line_buffer = ""
 
@@ -245,7 +245,7 @@ def parse_esphome_version() -> tuple[int, int, int]:
     match = re.match(r"^(\d+).(\d+).(\d+)(-dev\d*|b\d*)?$", const.__version__)
     if match is None:
         raise ValueError(f"Failed to parse ESPHome version '{const.__version__}'")
-    return int(match.group(1)), int(match.group(2)), int(match.group(3))
+    return int(match[1]), int(match[2]), int(match[3])
 
 
 # Custom OrderedDict with nicer repr method for debugging

@@ -39,9 +39,7 @@ CONF_INTEGRATION_METHOD = "integration_method"
 
 def inherit_unit_of_measurement(uom, config):
     suffix = config[CONF_TIME_UNIT]
-    if uom.endswith("/" + suffix):
-        return uom[0 : -len("/" + suffix)]
-    return uom + suffix
+    return uom[:-len(f"/{suffix}")] if uom.endswith(f"/{suffix}") else uom + suffix
 
 
 def inherit_accuracy_decimals(decimals, config):

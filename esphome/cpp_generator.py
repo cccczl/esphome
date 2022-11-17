@@ -275,9 +275,7 @@ class IntLiteral(Literal):
             return f"{self.i}ULL"
         if self.i > 2147483647:
             return f"{self.i}UL"
-        if self.i < -2147483648:
-            return f"{self.i}LL"
-        return str(self.i)
+        return f"{self.i}LL" if self.i < -2147483648 else str(self.i)
 
 
 class BoolLiteral(Literal):
@@ -310,9 +308,7 @@ class FloatLiteral(Literal):
         self.f = value
 
     def __str__(self):
-        if math.isnan(self.f):
-            return "NAN"
-        return f"{self.f}f"
+        return "NAN" if math.isnan(self.f) else f"{self.f}f"
 
 
 class BinOpExpression(Expression):
@@ -690,10 +686,7 @@ async def process_lambda(
             parts[i * 3 + 1] = var.value()
             continue
 
-        if parts[i * 3 + 2] == ".":
-            parts[i * 3 + 1] = var._
-        else:
-            parts[i * 3 + 1] = var
+        parts[i * 3 + 1] = var._ if parts[i * 3 + 2] == "." else var
         parts[i * 3 + 2] = ""
 
     if isinstance(value, ESPHomeDataBase) and value.esp_range is not None:
@@ -730,9 +723,7 @@ async def templatable(
         return await process_lambda(value, args, return_type=output_type)
     if to_exp is None:
         return value
-    if isinstance(to_exp, dict):
-        return to_exp[value]
-    return to_exp(value)
+    return to_exp[value] if isinstance(to_exp, dict) else to_exp(value)
 
 
 class MockObj(Expression):
@@ -1017,10 +1008,7 @@ class MockObjClass(MockObj):
     def inherits_from(self, other: "MockObjClass") -> bool:
         if str(self) == str(other):
             return True
-        for parent in self._parents:
-            if str(parent) == str(other):
-                return True
-        return False
+        return any(str(parent) == str(other) for parent in self._parents)
 
     def template(self, *args: SafeExpType) -> "MockObjClass":
         if len(args) != 1 or not isinstance(args[0], TemplateArguments):

@@ -74,9 +74,10 @@ def main():
         )
         return 1
 
-    files = []
-    for path in git_ls_files(["*.cpp", "*.h", "*.tcc"]):
-        files.append(os.path.relpath(path, os.getcwd()))
+    files = [
+        os.path.relpath(path, os.getcwd())
+        for path in git_ls_files(["*.cpp", "*.h", "*.tcc"])
+    ]
 
     if args.files:
         # Match against files specified on command-line

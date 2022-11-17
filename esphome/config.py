@@ -54,9 +54,7 @@ ConfigPath = list[Union[str, int]]
 
 
 def _path_begins_with(path: ConfigPath, other: ConfigPath) -> bool:
-    if len(path) < len(other):
-        return False
-    return path[: len(other)] == other
+    return False if len(path) < len(other) else path[: len(other)] == other
 
 
 @functools.total_ordering
@@ -141,10 +139,7 @@ class Config(OrderedDict, fv.FinalValidateConfig):
         self.output_paths.remove((path, domain))
 
     def is_in_error_path(self, path: ConfigPath) -> bool:
-        for err in self.errors:
-            if _path_begins_with(err.path, path):
-                return True
-        return False
+        return any(_path_begins_with(err.path, path) for err in self.errors)
 
     def set_by_path(self, path, value):
         conf = self
@@ -252,8 +247,6 @@ def recursive_check_replaceme(value):
         return cv.Schema([recursive_check_replaceme])(value)
     if isinstance(value, dict):
         return cv.Schema({cv.valid: recursive_check_replaceme})(value)
-    if isinstance(value, ESPForceValue):
-        pass
     if isinstance(value, str) and value == "REPLACEME":
         raise cv.Invalid(
             "Found 'REPLACEME' in configuration, this is most likely an error. "
@@ -492,12 +485,10 @@ class SchemaValidationStep(ConfigValidationStep):
                     validated = OrderedDict(validated)
                 validated["platform"] = platform_val
                 validated.move_to_end("platform", last=False)
-                result.set_by_path(self.path, validated)
             else:
                 schema = cv.Schema(self.comp.config_schema)
                 validated = schema(self.conf)
-                result.set_by_path(self.path, validated)
-
+            result.set_by_path(self.path, validated)
         result.add_validation_step(FinalValidateValidationStep(self.path, self.comp))
 
 
@@ -565,11 +556,10 @@ class IDPassValidationStep(ConfigValidationStep):
                         f"Couldn't find ID '{id.id}'. Please check you have defined "
                         "an ID with that name in your configuration."
                     )
-                    # Find candidates
-                    matches = difflib.get_close_matches(
-                        id.id, [v[0].id for v in result.declare_ids if v[0].is_manual]
-                    )
-                    if matches:
+                    if matches := difflib.get_close_matches(
+                        id.id,
+                        [v[0].id for v in result.declare_ids if v[0].is_manual],
+                    ):
                         matches_s = ", ".join(f'"{x}"' for x in matches)
                         error += f" These IDs look similar: {matches_s}."
                     result.add_str_error(error, path)
@@ -590,35 +580,39 @@ class IDPassValidationStep(ConfigValidationStep):
                 for v in result.declare_ids:
                     if v[0] is None or not isinstance(v[0].type, MockObjClass):
                         continue
-                    inherits = v[0].type.inherits_from(id.type)
-                    if inherits:
+                    if inherits := v[0].type.inherits_from(id.type):
                         matches.append(v[0])
 
-                if len(matches) == 0:
+                if (
+                    matches
+                    and len(matches) != 1
+                    and len(matches) > 1
+                    and str(id.type) == "time::RealTimeClock"
+                    or matches
+                    and len(matches) == 1
+                ):
+                    id.id = matches[0].id
+                elif len(matches) != 0 and len(matches) > 1:
+                    manual_declared_count = sum(1 for m in matches if m.is_manual)
+                    if manual_declared_count > 0:
+                        ids = ", ".join(
+                            [f"'{m.id}'" for m in matches if m.is_manual]
+                        )
+                        result.add_str_error(
+                            f"Too many candidates found for '{path[-1]}' type '{id.type}' {'Some are' if manual_declared_count > 1 else 'One is'} {ids}",
+                            path,
+                        )
+                    else:
+                        result.add_str_error(
+                            f"Too many candidates found for '{path[-1]}' type '{id.type}' You must assign an explicit ID to the parent component you want to use.",
+                            path,
+                        )
+
+                elif not matches:
                     result.add_str_error(
                         f"Couldn't find any component that can be used for '{id.type}'. Are you missing a hub declaration?",
                         path,
                     )
-                elif len(matches) == 1:
-                    id.id = matches[0].id
-                elif len(matches) > 1:
-                    if str(id.type) == "time::RealTimeClock":
-                        id.id = matches[0].id
-                    else:
-                        manual_declared_count = sum(1 for m in matches if m.is_manual)
-                        if manual_declared_count > 0:
-                            ids = ", ".join(
-                                [f"'{m.id}'" for m in matches if m.is_manual]
-                            )
-                            result.add_str_error(
-                                f"Too many candidates found for '{path[-1]}' type '{id.type}' {'Some are' if manual_declared_count > 1 else 'One is'} {ids}",
-                                path,
-                            )
-                        else:
-                            result.add_str_error(
-                                f"Too many candidates found for '{path[-1]}' type '{id.type}' You must assign an explicit ID to the parent component you want to use.",
-                                path,
-                            )
 
 
 class FinalValidateValidationStep(ConfigValidationStep):
@@ -755,7 +749,7 @@ def humanize_error(config, validation_error):
         r"^(.*?)\s*(?:for dictionary value )?@ data\[.*$", validation_error, re.DOTALL
     )
     if m is not None:
-        validation_error = m.group(1)
+        validation_error = m[1]
     validation_error = validation_error.strip()
     if not validation_error.endswith("."):
         validation_error += "."
@@ -837,8 +831,7 @@ def line_info(config, path, highlight=True):
     """Display line config source."""
     if not highlight:
         return None
-    obj = config.get_deepest_document_range_for_path(path)
-    if obj:
+    if obj := config.get_deepest_document_range_for_path(path):
         mark = obj.start_mark
         source = f"[source {mark.document}:{mark.line + 1}]"
         return color(Fore.CYAN, source)
@@ -850,9 +843,7 @@ def _print_on_next_line(obj):
         return True
     if isinstance(obj, str):
         return len(obj) > 80
-    if isinstance(obj, core.Lambda):
-        return len(obj.value) > 80
-    return False
+    return len(obj.value) > 80 if isinstance(obj, core.Lambda) else False
 
 
 def dump_dict(
@@ -912,10 +903,7 @@ def dump_dict(
                 msg = f"\n{indent(msg)}"
 
             if inf is not None:
-                if m:
-                    msg = f" {inf}{msg}"
-                else:
-                    msg = f"{msg} {inf}"
+                msg = f" {inf}{msg}" if m else f"{msg} {inf}"
             ret += f"{st + msg}\n"
     elif isinstance(conf, str):
         if is_secret(conf):
@@ -936,9 +924,7 @@ def dump_dict(
         error = config.get_error_for_path(path)
         col = Fore.BOLD_RED if error else Fore.KEEP
         ret += color(col, conf)
-    elif conf is None:
-        pass
-    else:
+    elif conf is not None:
         error = config.get_error_for_path(path)
         col = Fore.BOLD_RED if error else Fore.KEEP
         ret += color(col, str(conf))
@@ -989,8 +975,7 @@ def read_config(command_line_substitutions):
                 continue
 
             errstr = color(Fore.BOLD_RED, f"{domain}:")
-            errline = line_info(res, path)
-            if errline:
+            if errline := line_info(res, path):
                 errstr += f" {errline}"
             safe_print(errstr)
             safe_print(indent(dump_dict(res, path)[0]))

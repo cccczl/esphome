@@ -200,8 +200,11 @@ DEFAULT_TIME_ON = "900ms"
 async def autorepeat_filter_to_code(config, filter_id):
     timings = []
     if len(config) > 0:
-        for conf in config:
-            timings.append((conf[CONF_DELAY], conf[CONF_TIME_OFF], conf[CONF_TIME_ON]))
+        timings.extend(
+            (conf[CONF_DELAY], conf[CONF_TIME_OFF], conf[CONF_TIME_ON])
+            for conf in config
+        )
+
     else:
         timings.append(
             (
@@ -296,7 +299,7 @@ def validate_multi_click_timing(value):
         max_length = v_.get(CONF_MAX_LENGTH)
         if min_length is None and max_length is None:
             raise cv.Invalid("At least one of min_length and max_length is required!")
-        if min_length is None and max_length is not None:
+        if min_length is None:
             min_length = core.TimePeriodMilliseconds(milliseconds=0)
 
         new_state = v_.get(CONF_STATE, not state)
@@ -451,16 +454,16 @@ async def setup_binary_sensor_core_(var, config):
         await automation.build_automation(trigger, [], conf)
 
     for conf in config.get(CONF_ON_MULTI_CLICK, []):
-        timings = []
-        for tim in conf[CONF_TIMING]:
-            timings.append(
-                cg.StructInitializer(
-                    MultiClickTriggerEvent,
-                    ("state", tim[CONF_STATE]),
-                    ("min_length", tim[CONF_MIN_LENGTH]),
-                    ("max_length", tim.get(CONF_MAX_LENGTH, 4294967294)),
-                )
+        timings = [
+            cg.StructInitializer(
+                MultiClickTriggerEvent,
+                ("state", tim[CONF_STATE]),
+                ("min_length", tim[CONF_MIN_LENGTH]),
+                ("max_length", tim.get(CONF_MAX_LENGTH, 4294967294)),
             )
+            for tim in conf[CONF_TIMING]
+        ]
+
         trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var, timings)
         if CONF_INVALID_COOLDOWN in conf:
             cg.add(trigger.set_invalid_cooldown(conf[CONF_INVALID_COOLDOWN]))

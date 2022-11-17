@@ -79,9 +79,11 @@ class DashboardSettings:
 
     @property
     def using_ha_addon_auth(self):
-        if not self.on_ha_addon:
-            return False
-        return not get_bool_env("DISABLE_HA_AUTHENTICATION")
+        return (
+            not get_bool_env("DISABLE_HA_AUTHENTICATION")
+            if self.on_ha_addon
+            else False
+        )
 
     @property
     def using_auth(self):
@@ -478,10 +480,10 @@ class DownloadBinaryRequestHandler(BaseHandler):
 
         with open(path, "rb") as f:
             while True:
-                data = f.read(16384)
-                if not data:
+                if data := f.read(16384):
+                    self.write(data)
+                else:
                     break
-                self.write(data)
         self.finish()
 
 
@@ -543,15 +545,11 @@ class DashboardEntry:
 
     @property
     def address(self):
-        if self.storage is None:
-            return None
-        return self.storage.address
+        return None if self.storage is None else self.storage.address
 
     @property
     def web_port(self):
-        if self.storage is None:
-            return None
-        return self.storage.web_port
+        return None if self.storage is None else self.storage.web_port
 
     @property
     def name(self):
@@ -561,27 +559,19 @@ class DashboardEntry:
 
     @property
     def comment(self):
-        if self.storage is None:
-            return None
-        return self.storage.comment
+        return None if self.storage is None else self.storage.comment
 
     @property
     def target_platform(self):
-        if self.storage is None:
-            return None
-        return self.storage.target_platform
+        return None if self.storage is None else self.storage.target_platform
 
     @property
     def update_available(self):
-        if self.storage is None:
-            return True
-        return self.update_old != self.update_new
+        return True if self.storage is None else self.update_old != self.update_new
 
     @property
     def update_old(self):
-        if self.storage is None:
-            return ""
-        return self.storage.esphome_version or ""
+        return "" if self.storage is None else self.storage.esphome_version or ""
 
     @property
     def update_new(self):
@@ -589,9 +579,7 @@ class DashboardEntry:
 
     @property
     def loaded_integrations(self):
-        if self.storage is None:
-            return []
-        return self.storage.loaded_integrations
+        return [] if self.storage is None else self.storage.loaded_integrations
 
 
 class ListDevicesHandler(BaseHandler):

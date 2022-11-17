@@ -30,16 +30,17 @@ TuyaClimate = tuya_ns.class_("TuyaClimate", climate.Climate, cg.Component)
 
 
 def validate_temperature_multipliers(value):
-    if CONF_TEMPERATURE_MULTIPLIER in value:
-        if (
+    if CONF_TEMPERATURE_MULTIPLIER in value and (
+        (
             CONF_CURRENT_TEMPERATURE_MULTIPLIER in value
             or CONF_TARGET_TEMPERATURE_MULTIPLIER in value
-        ):
-            raise cv.Invalid(
-                f"Cannot have {CONF_TEMPERATURE_MULTIPLIER} at the same time as "
-                f"{CONF_CURRENT_TEMPERATURE_MULTIPLIER} and "
-                f"{CONF_TARGET_TEMPERATURE_MULTIPLIER}"
-            )
+        )
+    ):
+        raise cv.Invalid(
+            f"Cannot have {CONF_TEMPERATURE_MULTIPLIER} at the same time as "
+            f"{CONF_CURRENT_TEMPERATURE_MULTIPLIER} and "
+            f"{CONF_TARGET_TEMPERATURE_MULTIPLIER}"
+        )
     if (
         CONF_CURRENT_TEMPERATURE_MULTIPLIER in value
         and CONF_TARGET_TEMPERATURE_MULTIPLIER not in value
@@ -67,18 +68,17 @@ def validate_temperature_multipliers(value):
 
 
 def validate_active_state_values(value):
-    if CONF_ACTIVE_STATE_DATAPOINT not in value:
-        if CONF_ACTIVE_STATE_COOLING_VALUE in value:
-            raise cv.Invalid(
-                f"{CONF_ACTIVE_STATE_DATAPOINT} required if using "
-                f"{CONF_ACTIVE_STATE_COOLING_VALUE}"
-            )
-    else:
+    if CONF_ACTIVE_STATE_DATAPOINT in value:
         if value[CONF_SUPPORTS_COOL] and CONF_ACTIVE_STATE_COOLING_VALUE not in value:
             raise cv.Invalid(
                 f"{CONF_ACTIVE_STATE_COOLING_VALUE} required if using "
                 f"{CONF_ACTIVE_STATE_DATAPOINT} and device supports cooling"
             )
+    elif CONF_ACTIVE_STATE_COOLING_VALUE in value:
+        raise cv.Invalid(
+            f"{CONF_ACTIVE_STATE_DATAPOINT} required if using "
+            f"{CONF_ACTIVE_STATE_COOLING_VALUE}"
+        )
     return value
 
 

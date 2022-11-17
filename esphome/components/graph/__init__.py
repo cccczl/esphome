@@ -129,10 +129,7 @@ def _relocate_fields_to_subfolder(config, subfolder, subschema):
                 )
     else:
         # Copy over all fields to subfolder:
-        trace = {}
-        for f in fields:
-            if f in config:
-                trace[f] = config.pop(f)
+        trace = {f: config.pop(f) for f in fields if f in config}
         config[subfolder] = cv.ensure_list(subschema)(trace)
     return config
 

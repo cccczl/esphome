@@ -66,11 +66,12 @@ def get_component_names():
     component_names = ["esphome", "sensor"]
 
     for d in os.listdir(CORE_COMPONENTS_PATH):
-        if not d.startswith("__") and os.path.isdir(
-            os.path.join(CORE_COMPONENTS_PATH, d)
+        if (
+            not d.startswith("__")
+            and os.path.isdir(os.path.join(CORE_COMPONENTS_PATH, d))
+            and d not in component_names
         ):
-            if d not in component_names:
-                component_names.append(d)
+            component_names.append(d)
 
     return component_names
 
@@ -100,7 +101,7 @@ from esphome.util import Registry
 
 
 def write_file(name, obj):
-    full_path = os.path.join(args.output_path, name + ".json")
+    full_path = os.path.join(args.output_path, f"{name}.json")
     if JSON_DUMP_PRETTY:
         json_str = json.dumps(obj, indent=2)
     else:
@@ -113,11 +114,12 @@ def register_module_schemas(key, module, manifest=None):
     for name, schema in module_schemas(module):
         register_known_schema(key, name, schema)
 
-    if manifest:
-        # Multi conf should allow list of components
-        # not sure about 2nd part of the if, might be useless config (e.g. as3935)
-        if manifest.multi_conf and S_CONFIG_SCHEMA in output[key][S_SCHEMAS]:
-            output[key][S_SCHEMAS][S_CONFIG_SCHEMA]["is_list"] = True
+    if (
+        manifest
+        and manifest.multi_conf
+        and S_CONFIG_SCHEMA in output[key][S_SCHEMAS]
+    ):
+        output[key][S_SCHEMAS][S_CONFIG_SCHEMA]["is_list"] = True
 
 
 def register_known_schema(module, name, schema):
@@ -141,11 +143,8 @@ def module_schemas(module):
     # To do this we check on the source code where the symbol is seen first. Seems to work.
     try:
         module_str = inspect.getsource(module)
-    except TypeError:
+    except (TypeError, OSError):
         # improv
-        module_str = ""
-    except OSError:
-        # some empty __init__ files
         module_str = ""
     schemas = {}
     for m_attr_name in dir(module):
@@ -297,9 +296,8 @@ def get_logger_tags():
         for y in glob.glob(os.path.join(x[0], "*.cpp")):
             with open(y, encoding="utf-8") as file:
                 data = file.read()
-                match = pattern.search(data)
-                if match:
-                    tags.append(match.group(1))
+                if match := pattern.search(data):
+                    tags.append(match[1])
     return tags
 
 
@@ -331,9 +329,8 @@ def add_referenced_recursive(referenced_schemas, config_var, path, eat_schema=Fa
         for k in schema.get(S_EXTENDS, []):
             if k not in referenced_schemas:
                 referenced_schemas[k] = [path]
-            else:
-                if path not in referenced_schemas[k]:
-                    referenced_schemas[k].append(path)
+            elif path not in referenced_schemas[k]:
+                referenced_schemas[k].append(path)
 
             s1 = get_str_path_schema(k)
             p = k.split(".")
@@ -362,16 +359,15 @@ def add_referenced_recursive(referenced_schemas, config_var, path, eat_schema=Fa
 def get_str_path_schema(strPath):
     parts = strPath.split(".")
     if len(parts) > 2:
-        parts[0] += "." + parts[1]
+        parts[0] += f".{parts[1]}"
         parts[1] = parts[2]
-    s1 = output.get(parts[0], {}).get(S_SCHEMAS, {}).get(parts[1], {})
-    return s1
+    return output.get(parts[0], {}).get(S_SCHEMAS, {}).get(parts[1], {})
 
 
 def pop_str_path_schema(strPath):
     parts = strPath.split(".")
     if len(parts) > 2:
-        parts[0] += "." + parts[1]
+        parts[0] += f".{parts[1]}"
         parts[1] = parts[2]
     output.get(parts[0], {}).get(S_SCHEMAS, {}).pop(parts[1])
 
@@ -438,7 +434,7 @@ def shrink():
                     if S_EXTENDS in arr_s[S_SCHEMA]:
                         arr_s[S_SCHEMA].pop(S_EXTENDS)
                     else:
-                        print("expected extends here!" + x)
+                        print(f"expected extends here!{x}")
                     arr_s = merge(key_s, arr_s)
                     if arr_s[S_TYPE] in ["enum", "typed"]:
                         arr_s.pop(S_SCHEMA)
@@ -455,7 +451,7 @@ def shrink():
         key_s = get_str_path_schema(x)
         if key_s and key_s[S_TYPE] in ["enum", "registry", "integer", "string"]:
             if key_s[S_TYPE] == "registry":
-                print("Spreading registry: " + x)
+                print(f"Spreading registry: {x}")
             for target in paths:
                 target_s = get_arr_path_schema(target)
                 assert target_s[S_SCHEMA][S_EXTENDS] == [x]
@@ -480,7 +476,7 @@ def shrink():
         for schema_name in list(domain_schemas.get(S_SCHEMAS, {}).keys()):
             s = f"{domain}.{schema_name}"
             if (
-                not s.endswith("." + S_CONFIG_SCHEMA)
+                not s.endswith(f".{S_CONFIG_SCHEMA}")
                 and s not in referenced_schemas.keys()
             ):
                 print(f"Removing {s}")

@@ -92,8 +92,8 @@ def main():
     major_minor_version = None
     if match is None:
         channel = CHANNEL_DEV
-    elif match.group(2) is None:
-        major_minor_version = match.group(1)
+    elif match[2] is None:
+        major_minor_version = match[1]
         channel = CHANNEL_RELEASE
     else:
         channel = CHANNEL_BETA

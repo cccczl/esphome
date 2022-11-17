@@ -60,9 +60,7 @@ RemoteTransmitterBase = ns.class_("RemoteTransmitterBase")
 def templatize(value):
     if isinstance(value, cv.Schema):
         value = value.schema
-    ret = {}
-    for key, val in value.items():
-        ret[key] = cv.templatable(val)
+    ret = {key: cv.templatable(val) for key, val in value.items()}
     return cv.Schema(ret)
 
 
@@ -202,9 +200,7 @@ def validate_triggers(base_schema):
             added_keys[cv.Optional(key)] = valid
         new_schema = base_schema.extend(added_keys)
 
-        if config == SCHEMA_EXTRACT:
-            return new_schema
-        return new_schema(config)
+        return new_schema if config == SCHEMA_EXTRACT else new_schema(config)
 
     return validator
 
@@ -621,12 +617,11 @@ def validate_raw_alternating(value):
     last_negative = None
     for i, val in enumerate(value):
         this_negative = val < 0
-        if i != 0:
-            if this_negative == last_negative:
-                raise cv.Invalid(
-                    f"Values must alternate between being positive and negative, please see index {i} and {i + 1}",
-                    [i],
-                )
+        if i != 0 and this_negative == last_negative:
+            raise cv.Invalid(
+                f"Values must alternate between being positive and negative, please see index {i} and {i + 1}",
+                [i],
+            )
         last_negative = this_negative
     return value
 

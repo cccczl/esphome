@@ -57,9 +57,6 @@ def esp32_validate_supports(value):
     is_pullup = mode[CONF_PULLUP]
     is_pulldown = mode[CONF_PULLDOWN]
 
-    if is_input:
-        # All ESP32 pins support input mode
-        pass
     if is_output and 34 <= num <= 39:
         raise cv.Invalid(
             f"GPIO{num} (34-39) does not support output pin mode.",

@@ -60,15 +60,7 @@ def determine_config_register(polling_period):
         # 0000 00 010 01 00000
         # 0000 0001 0010 0000
         return 0x0120
-    if polling_period >= 0.125:
-        # 8 averaged conversions, min conversion time
-        # 0000 00 000 01 00000
-        # 0000 0000 0010 0000
-        return 0x0020
-    # 1 averaged conversions, min conversion time
-    # 0000 00 000 00 00000
-    # 0000 0000 0000 0000
-    return 0x0000
+    return 0x0020 if polling_period >= 0.125 else 0x0000
 
 
 async def to_code(config):

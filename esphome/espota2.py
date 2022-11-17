@@ -73,17 +73,11 @@ class OTAError(EsphomeError):
 
 def recv_decode(sock, amount, decode=True):
     data = sock.recv(amount)
-    if not decode:
-        return data
-    return list(data)
+    return list(data) if decode else data
 
 
 def receive_exactly(sock, amount, msg, expect, decode=True):
-    if decode:
-        data = []
-    else:
-        data = b""
-
+    data = [] if decode else b""
     try:
         data += recv_decode(sock, 1, decode=decode)
     except OSError as err:

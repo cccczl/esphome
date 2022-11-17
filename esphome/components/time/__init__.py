@@ -244,7 +244,7 @@ def validate_cron_keys(value):
             raise cv.Invalid("Cannot use option at with cron!")
         cron_ = value[CONF_CRON]
         value = {x: value[x] for x in value if x != CONF_CRON}
-        value.update(cron_)
+        value |= cron_
         return value
     if CONF_AT in value:
         for key in value.keys():
@@ -252,7 +252,7 @@ def validate_cron_keys(value):
                 raise cv.Invalid(f"Cannot use option {key} when at: is specified.")
         at_ = value[CONF_AT]
         value = {x: value[x] for x in value if x != CONF_AT}
-        value.update(at_)
+        value |= at_
         return value
     return cv.has_at_least_one_key(*CRON_KEYS)(value)
 
@@ -261,11 +261,7 @@ def validate_tz(value: str) -> str:
     value = cv.string_strict(value)
 
     tzfile = _load_tzdata(value)
-    if tzfile is None:
-        # Not a IANA key, probably a TZ string
-        return value
-
-    return _extract_tz_string(tzfile)
+    return value if tzfile is None else _extract_tz_string(tzfile)
 
 
 TIME_SCHEMA = cv.Schema(
@@ -300,11 +296,11 @@ async def setup_time_core_(time_var, config):
     for conf in config.get(CONF_ON_TIME, []):
         trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], time_var)
 
-        seconds = conf.get(CONF_SECONDS, list(range(0, 61)))
+        seconds = conf.get(CONF_SECONDS, list(range(61)))
         cg.add(trigger.add_seconds(seconds))
-        minutes = conf.get(CONF_MINUTES, list(range(0, 60)))
+        minutes = conf.get(CONF_MINUTES, list(range(60)))
         cg.add(trigger.add_minutes(minutes))
-        hours = conf.get(CONF_HOURS, list(range(0, 24)))
+        hours = conf.get(CONF_HOURS, list(range(24)))
         cg.add(trigger.add_hours(hours))
         days_of_month = conf.get(CONF_DAYS_OF_MONTH, list(range(1, 32)))
         cg.add(trigger.add_days_of_month(days_of_month))

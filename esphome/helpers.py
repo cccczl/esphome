@@ -41,20 +41,13 @@ def indent(text, padding="  "):
 # From https://stackoverflow.com/a/14945195/8924614
 def cpp_string_escape(string, encoding="utf-8"):
     def _should_escape(byte: int) -> bool:
-        if not 32 <= byte < 127:
-            return True
-        if byte in (ord("\\"), ord('"')):
-            return True
-        return False
+        return byte in (ord("\\"), ord('"')) if 32 <= byte < 127 else True
 
     if isinstance(string, str):
         string = string.encode(encoding)
     result = ""
     for character in string:
-        if _should_escape(character):
-            result += f"\\{character:03o}"
-        else:
-            result += chr(character)
+        result += f"\\{character:03o}" if _should_escape(character) else chr(character)
     return f'"{result}"'
 
 
@@ -76,9 +69,7 @@ def mkdir_p(path):
     except OSError as err:
         import errno
 
-        if err.errno == errno.EEXIST and os.path.isdir(path):
-            pass
-        else:
+        if err.errno != errno.EEXIST or not os.path.isdir(path):
             from esphome.core import EsphomeError
 
             raise EsphomeError(f"Error creating directories {path}: {err}") from err
@@ -158,11 +149,7 @@ def read_file(path):
     try:
         with codecs.open(path, "r", encoding="utf-8") as f_handle:
             return f_handle.read()
-    except OSError as err:
-        from esphome.core import EsphomeError
-
-        raise EsphomeError(f"Error reading file {path}: {err}") from err
-    except UnicodeDecodeError as err:
+    except (OSError, UnicodeDecodeError) as err:
         from esphome.core import EsphomeError
 
         raise EsphomeError(f"Error reading file {path}: {err}") from err
@@ -218,9 +205,7 @@ def write_file_if_changed(path: Union[Path, str], text: str) -> bool:
     if not isinstance(path, Path):
         path = Path(path)
 
-    src_content = None
-    if path.is_file():
-        src_content = read_file(path)
+    src_content = read_file(path) if path.is_file() else None
     if src_content == text:
         return False
     write_file(path, text)

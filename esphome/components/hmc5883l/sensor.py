@@ -114,10 +114,14 @@ CONFIG_SCHEMA = (
 def auto_data_rate(config):
     interval_msec = config[CONF_UPDATE_INTERVAL].total_milliseconds
     interval_hz = 1000.0 / interval_msec
-    for datarate in sorted(HMC5883LDatarates.keys()):
-        if float(datarate) >= interval_hz:
-            return HMC5883LDatarates[datarate]
-    return HMC5883LDatarates[75]
+    return next(
+        (
+            HMC5883LDatarates[datarate]
+            for datarate in sorted(HMC5883LDatarates.keys())
+            if float(datarate) >= interval_hz
+        ),
+        HMC5883LDatarates[75],
+    )
 
 
 async def to_code(config):

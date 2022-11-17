@@ -245,7 +245,7 @@ def process_stacktrace(config, line, backtrace_state):
     # ESP8266 Exception type
     match = re.match(STACKTRACE_ESP8266_EXCEPTION_TYPE_RE, line)
     if match is not None:
-        code = int(match.group(1))
+        code = int(match[1])
         _LOGGER.warning(
             "Exception type: %s", ESP8266_EXCEPTION_CODES.get(code, "unknown")
         )
@@ -264,9 +264,10 @@ def process_stacktrace(config, line, backtrace_state):
     match = re.match(STACKTRACE_BAD_ALLOC_RE, line)
     if match is not None:
         _LOGGER.warning(
-            "Memory allocation of %s bytes failed at %s", match.group(2), match.group(1)
+            "Memory allocation of %s bytes failed at %s", match[2], match[1]
         )
-        _decode_pc(config, match.group(1))
+
+        _decode_pc(config, match[1])
 
     # ESP32 single-line backtrace
     match = re.match(STACKTRACE_ESP32_BACKTRACE_RE, line)

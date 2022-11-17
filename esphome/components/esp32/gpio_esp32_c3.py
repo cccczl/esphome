@@ -47,7 +47,4 @@ def esp32_c3_validate_supports(value):
     if num < 0 or num > 21:
         raise cv.Invalid(f"Invalid pin number: {value} (must be 0-21)")
 
-    if is_input:
-        # All ESP32 pins support input mode
-        pass
     return value

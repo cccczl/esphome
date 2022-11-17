@@ -35,9 +35,7 @@ def merge_config(full_old, full_new):
                 res[k] = merge(old[k], v) if k in old else v
             return res
         elif isinstance(new, list):
-            if not isinstance(old, list):
-                return new
-            return old + new
+            return old + new if isinstance(old, list) else new
         elif new is None:
             return old
 

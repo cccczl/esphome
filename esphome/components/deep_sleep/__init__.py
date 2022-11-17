@@ -178,7 +178,7 @@ async def to_code(config):
     if CONF_RUN_DURATION in config:
         run_duration_config = config[CONF_RUN_DURATION]
         if not isinstance(run_duration_config, dict):
-            cg.add(var.set_run_duration(config[CONF_RUN_DURATION]))
+            cg.add(var.set_run_duration(run_duration_config))
         else:
             default_run_duration = run_duration_config[CONF_DEFAULT]
             wakeup_cause_to_run_duration = cg.StructInitializer(

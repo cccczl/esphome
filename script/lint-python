@@ -49,8 +49,8 @@ def main():
     args = parser.parse_args()
 
     files = []
+    filetypes = (".py",)
     for path in git_ls_files():
-        filetypes = (".py",)
         ext = os.path.splitext(path)[1]
         if ext in filetypes and path.startswith("esphome"):
             path = os.path.relpath(path, os.getcwd())
@@ -72,8 +72,8 @@ def main():
     print("Running black...")
     print()
     log = get_err(*cmd)
+    WOULD_REFORMAT = "would reformat"
     for line in log.splitlines():
-        WOULD_REFORMAT = "would reformat"
         if line.startswith(WOULD_REFORMAT):
             file_ = line[len(WOULD_REFORMAT) + 1 :]
             print_error(file_, None, "Please format this file with the black formatter")
@@ -115,8 +115,8 @@ def main():
     print("Running pyupgrade...")
     print()
     log = get_err(*cmd)
+    REWRITING = "Rewriting"
     for line in log.splitlines():
-        REWRITING = "Rewriting"
         if line.startswith(REWRITING):
             file_ = line[len(REWRITING) + 1 :]
             print_error(

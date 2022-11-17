@@ -190,6 +190,4 @@ class DashboardImportDiscovery:
 class EsphomeZeroconf(Zeroconf):
     def resolve_host(self, host: str, timeout=3.0):
         info = HostResolver(host)
-        if info.request(self, timeout):
-            return socket.inet_ntoa(info.address)
-        return None
+        return socket.inet_ntoa(info.address) if info.request(self, timeout) else None

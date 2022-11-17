@@ -41,14 +41,9 @@ CONFIG_SCHEMA = cv.All(
 
 
 def validate_interval_uart(config):
-    require_tx = False
-
     interval = config.get(CONF_UPDATE_INTERVAL)
 
-    if isinstance(interval, TimePeriodMilliseconds):
-        # 'never' is encoded as a very large int, not as a TimePeriodMilliseconds objects
-        require_tx = True
-
+    require_tx = isinstance(interval, TimePeriodMilliseconds)
     uart.final_validate_device_schema(
         "pm1006", baud_rate=9600, require_rx=True, require_tx=require_tx
     )(config)

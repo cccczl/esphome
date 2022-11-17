@@ -23,11 +23,13 @@ def validate_logger(config):
     logger_conf = fv.full_config.get()[CONF_LOGGER]
     if logger_conf[CONF_BAUD_RATE] == 0:
         raise cv.Invalid("improv_serial requires the logger baud_rate to be not 0")
-    if CORE.using_esp_idf:
-        if logger_conf[CONF_HARDWARE_UART] in [USB_SERIAL_JTAG, USB_CDC]:
-            raise cv.Invalid(
-                "improv_serial does not support the selected logger hardware_uart"
-            )
+    if CORE.using_esp_idf and logger_conf[CONF_HARDWARE_UART] in [
+        USB_SERIAL_JTAG,
+        USB_CDC,
+    ]:
+        raise cv.Invalid(
+            "improv_serial does not support the selected logger hardware_uart"
+        )
     return config
 
 

@@ -47,12 +47,11 @@ async def to_code(config):
         new_width_max, new_height_max = config[CONF_RESIZE]
         ratio = min(new_width_max / width, new_height_max / height)
         width, height = int(width * ratio), int(height * ratio)
-    else:
-        if width > 500 or height > 500:
-            _LOGGER.warning(
-                "The image you requested is very big. Please consider using"
-                " the resize parameter."
-            )
+    elif width > 500 or height > 500:
+        _LOGGER.warning(
+            "The image you requested is very big. Please consider using"
+            " the resize parameter."
+        )
 
     if config[CONF_TYPE] == "GRAYSCALE":
         data = [0 for _ in range(height * width * frames)]

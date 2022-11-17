@@ -89,8 +89,9 @@ def get_firmware(value):
             Path(CORE.config_dir)
             / ".esphome"
             / DOMAIN
-            / (value[CONF_SHA256] + "_fw_stm.bin")
+            / f"{value[CONF_SHA256]}_fw_stm.bin"
         )
+
 
         if not path.is_file():
             firmware_data, dl_hash = dl(url)
@@ -126,7 +127,7 @@ def validate_firmware(value):
 
 def validate_sha256(value):
     value = cv.string(value)
-    if not value.isalnum() or not len(value) == 64:
+    if not value.isalnum() or len(value) != 64:
         raise ValueError(f"Not a valid SHA256 hex string: {value}")
     return value
 

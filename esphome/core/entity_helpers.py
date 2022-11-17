@@ -14,17 +14,18 @@ def inherit_property_from(property_to_inherit, parent_id_property, transform=Non
     """
 
     def _walk_config(config, path):
-        walk = [path] if not isinstance(path, list) else path
+        walk = path if isinstance(path, list) else [path]
         for item_or_index in walk:
             config = config[item_or_index]
         return config
 
     def inherit_property(config):
         # Split the property into its path and name
-        if not isinstance(property_to_inherit, list):
-            property_path, property = [], property_to_inherit
-        else:
-            property_path, property = property_to_inherit[:-1], property_to_inherit[-1]
+        property_path, property = (
+            (property_to_inherit[:-1], property_to_inherit[-1])
+            if isinstance(property_to_inherit, list)
+            else ([], property_to_inherit)
+        )
 
         # Check if the property to inherit is accessible
         try:

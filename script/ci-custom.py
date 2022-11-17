@@ -233,10 +233,8 @@ def lint_ext_check(fname):
 def lint_executable_bit(fname):
     ex = EXECUTABLE_BIT[fname]
     if ex != 100644:
-        return (
-            "File has invalid executable bit {}. If running from a windows machine please "
-            "see disabling executable bit in git.".format(ex)
-        )
+        return f"File has invalid executable bit {ex}. If running from a windows machine please see disabling executable bit in git."
+
     return None
 
 
@@ -282,11 +280,7 @@ def highlight(s):
 )
 def lint_no_defines(fname, match):
     s = highlight(f"static const uint8_t {match.group(1)} = {match.group(2)};")
-    return (
-        "#define macros for integer constants are not allowed, please use "
-        "{} style instead (replace uint8_t with the appropriate "
-        "datatype). See also Google style guide.".format(s)
-    )
+    return f"#define macros for integer constants are not allowed, please use {s} style instead (replace uint8_t with the appropriate datatype). See also Google style guide."
 
 
 @lint_re_check(r"^\s*delay\((\d+)\);" + CPP_RE_EOL, include=cpp_include)
@@ -294,13 +288,7 @@ def lint_no_long_delays(fname, match):
     duration_ms = int(match.group(1))
     if duration_ms < 50:
         return None
-    return (
-        "{} - long calls to delay() are not allowed in ESPHome because everything executes "
-        "in one thread. Calling delay() will block the main thread and slow down ESPHome.\n"
-        "If there's no way to work around the delay() and it doesn't execute often, please add "
-        "a '// NOLINT' comment to the line."
-        "".format(highlight(match.group(0).strip()))
-    )
+    return f"{highlight(match.group(0).strip())} - long calls to delay() are not allowed in ESPHome because everything executes in one thread. Calling delay() will block the main thread and slow down ESPHome.\nIf there's no way to work around the delay() and it doesn't execute often, please add a '// NOLINT' comment to the line."
 
 
 @lint_content_check(include=["esphome/const.py"])
@@ -342,11 +330,7 @@ def lint_conf_matches(fname, match):
     value_norm = value.replace(".", "_")
     if const_norm == value_norm:
         return None
-    return (
-        "Constant {} does not match value {}! Please make sure the constant's name matches its "
-        "value!"
-        "".format(highlight("CONF_" + const), highlight(value))
-    )
+    return f"""Constant {highlight(f"CONF_{const}")} does not match value {highlight(value)}! Please make sure the constant's name matches its value!"""
 
 
 CONF_RE = r'^(CONF_[a-zA-Z0-9_]+)\s*=\s*[\'"].*?[\'"]\s*?$'
@@ -363,10 +347,7 @@ def lint_conf_from_const_py(fname, match):
     if name not in CONSTANTS:
         CONSTANTS_USES[name].append(fname)
         return None
-    return (
-        "Constant {} has already been defined in const.py - please import the constant from "
-        "const.py directly.".format(highlight(name))
-    )
+    return f"Constant {highlight(name)} has already been defined in const.py - please import the constant from const.py directly."
 
 
 RAW_PIN_ACCESS_RE = (
@@ -472,16 +453,11 @@ def lint_no_byte_datatype(fname, match):
 
 @lint_post_check
 def lint_constants_usage():
-    errors = []
-    for constant, uses in CONSTANTS_USES.items():
-        if len(uses) < 4:
-            continue
-        errors.append(
-            "Constant {} is defined in {} files. Please move all definitions of the "
-            "constant to const.py (Uses: {})"
-            "".format(highlight(constant), len(uses), ", ".join(uses))
-        )
-    return errors
+    return [
+        f'Constant {highlight(constant)} is defined in {len(uses)} files. Please move all definitions of the constant to const.py (Uses: {", ".join(uses)})'
+        for constant, uses in CONSTANTS_USES.items()
+        if len(uses) >= 4
+    ]
 
 
 def relative_cpp_search_text(fname, content):
@@ -539,15 +515,12 @@ def lint_relative_py_import(fname):
 def lint_namespace(fname, content):
     expected_name = re.match(
         r"^esphome/components/([^/]+)/.*", fname.replace(os.path.sep, "/")
-    ).group(1)
+    )[1]
+
     search = f"namespace {expected_name}"
     if search in content:
         return None
-    return (
-        "Invalid namespace found in C++ file. All integration C++ files should put all "
-        "functions in a separate namespace that matches the integration's name. "
-        "Please make sure the file contains {}".format(highlight(search))
-    )
+    return f"Invalid namespace found in C++ file. All integration C++ files should put all functions in a separate namespace that matches the integration's name. Please make sure the file contains {highlight(search)}"
 
 
 @lint_content_find_check('"esphome.h"', include=cpp_include, exclude=["tests/custom.h"])

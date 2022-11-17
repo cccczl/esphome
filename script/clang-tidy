@@ -32,9 +32,7 @@ def clang_options(idedata):
     # extract target architecture from triplet in g++ filename
     triplet = os.path.basename(idedata["cxx_path"])[:-4]
     if triplet.startswith("xtensa-"):
-        # clang doesn't support Xtensa (yet?), so compile in 32-bit mode and pretend we're the Xtensa compiler
-        cmd.append("-m32")
-        cmd.append("-D__XTENSA__")
+        cmd.extend(("-m32", "-D__XTENSA__"))
     else:
         cmd.append(f"--target={triplet}")
 
@@ -128,9 +126,14 @@ def run_tidy(args, options, tmpdir, queue, lock, failed_files):
         if sys.stdout.isatty():
             invocation.append("--use-color")
 
-        invocation.append(f"--header-filter={os.path.abspath(basepath)}/.*")
-        invocation.append(os.path.abspath(path))
-        invocation.append("--")
+        invocation.extend(
+            (
+                f"--header-filter={os.path.abspath(basepath)}/.*",
+                os.path.abspath(path),
+                "--",
+            )
+        )
+
         invocation.extend(options)
 
         proc = subprocess.run(invocation, capture_output=True, encoding="utf-8")
@@ -211,9 +214,9 @@ def main():
     idedata = load_idedata(args.environment)
     options = clang_options(idedata)
 
-    files = []
-    for path in git_ls_files(["*.cpp"]):
-        files.append(os.path.relpath(path, os.getcwd()))
+    files = [
+        os.path.relpath(path, os.getcwd()) for path in git_ls_files(["*.cpp"])
+    ]
 
     if args.files:
         # Match against files specified on command-line
@@ -235,10 +238,7 @@ def main():
         build_all_include()
         files.insert(0, temp_header_file)
 
-    tmpdir = None
-    if args.fix:
-        tmpdir = tempfile.mkdtemp()
-
+    tmpdir = tempfile.mkdtemp() if args.fix else None
     failed_files = []
     try:
         task_queue = queue.Queue(args.jobs)

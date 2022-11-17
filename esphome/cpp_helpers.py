@@ -88,10 +88,7 @@ async def register_component(var, config):
 
 
 async def register_parented(var, value):
-    if isinstance(value, ID):
-        paren = await get_variable(value)
-    else:
-        paren = value
+    paren = await get_variable(value) if isinstance(value, ID) else value
     add(var.set_parent(paren))
 
 

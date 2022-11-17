@@ -457,14 +457,8 @@ def validate_thermostat(config):
             )
 
         presets = config[CONF_PRESET]
-        found_preset = False
-
-        for preset in presets:
-            if preset[CONF_NAME] == default_preset:
-                found_preset = True
-                break
-
-        if found_preset is False:
+        found_preset = any(preset[CONF_NAME] == default_preset for preset in presets)
+        if not found_preset:
             raise cv.Invalid(
                 f"{CONF_DEFAULT_PRESET} set to '{default_preset}' but no such preset has been defined. Available presets: {[preset[CONF_NAME] for preset in presets]}"
             )
@@ -472,12 +466,12 @@ def validate_thermostat(config):
     # If restoring default preset on boot is true then ensure we have a default preset
     if (
         CONF_ON_BOOT_RESTORE_FROM in config
-        and config[CONF_ON_BOOT_RESTORE_FROM] is OnBootRestoreFrom.DEFAULT_PRESET
-    ):
-        if CONF_DEFAULT_PRESET not in config:
-            raise cv.Invalid(
-                f"{CONF_DEFAULT_PRESET} must be defined to use {CONF_ON_BOOT_RESTORE_FROM} in DEFAULT_PRESET mode"
-            )
+        and config[CONF_ON_BOOT_RESTORE_FROM]
+        is OnBootRestoreFrom.DEFAULT_PRESET
+    ) and CONF_DEFAULT_PRESET not in config:
+        raise cv.Invalid(
+            f"{CONF_DEFAULT_PRESET} must be defined to use {CONF_ON_BOOT_RESTORE_FROM} in DEFAULT_PRESET mode"
+        )
 
     if config[CONF_FAN_WITH_COOLING] is True and CONF_FAN_ONLY_ACTION not in config:
         raise cv.Invalid(
@@ -726,7 +720,7 @@ async def to_code(config):
         var.get_idle_action_trigger(), [], config[CONF_IDLE_ACTION]
     )
 
-    if heat_cool_mode_available is True:
+    if heat_cool_mode_available:
         cg.add(var.set_supports_heat_cool(True))
     else:
         cg.add(var.set_supports_heat_cool(False))

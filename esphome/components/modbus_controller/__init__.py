@@ -155,18 +155,15 @@ def validate_modbus_register(config):
 
 def modbus_calc_properties(config):
     byte_offset = 0
-    reg_count = 0
     if CONF_OFFSET in config:
         byte_offset = config[CONF_OFFSET]
     # A CONF_BYTE_OFFSET setting overrides CONF_OFFSET
     if CONF_BYTE_OFFSET in config:
         byte_offset = config[CONF_BYTE_OFFSET]
-    if CONF_REGISTER_COUNT in config:
-        reg_count = config[CONF_REGISTER_COUNT]
-    if CONF_VALUE_TYPE in config:
+    reg_count = config[CONF_REGISTER_COUNT] if CONF_REGISTER_COUNT in config else 0
+    if CONF_VALUE_TYPE in config and reg_count == 0:
         value_type = config[CONF_VALUE_TYPE]
-        if reg_count == 0:
-            reg_count = TYPE_REGISTER_MAP[value_type]
+        reg_count = TYPE_REGISTER_MAP[value_type]
     if CONF_CUSTOM_COMMAND in config:
         if CONF_ADDRESS not in config:
             # generate a unique modbus address using the hash of the name

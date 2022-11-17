@@ -42,7 +42,7 @@ Style = AnsiStyle()
 def color(col: str, msg: str, reset: bool = True) -> bool:
     if col and not col.startswith("\033["):
         raise ValueError("Color must be value from esphome.log.Fore")
-    s = str(col) + msg
+    s = col + msg
     if reset and col:
         s += str(Style.RESET_ALL)
     return s
@@ -50,8 +50,10 @@ def color(col: str, msg: str, reset: bool = True) -> bool:
 
 class ESPHomeLogFormatter(logging.Formatter):
     def __init__(self, *, include_timestamp: bool):
-        fmt = "%(asctime)s " if include_timestamp else ""
-        fmt += "%(levelname)s %(message)s"
+        fmt = (
+            "%(asctime)s " if include_timestamp else ""
+        ) + "%(levelname)s %(message)s"
+
         super().__init__(fmt=fmt, style="%")
 
     def format(self, record):

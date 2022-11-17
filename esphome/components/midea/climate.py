@@ -48,9 +48,7 @@ Capabilities = midea_ac_ns.namespace("Constants")
 def templatize(value):
     if isinstance(value, cv.Schema):
         value = value.schema
-    ret = {}
-    for key, val in value.items():
-        ret[key] = cv.templatable(val)
+    ret = {key: cv.templatable(val) for key, val in value.items()}
     return cv.Schema(ret)
 
 

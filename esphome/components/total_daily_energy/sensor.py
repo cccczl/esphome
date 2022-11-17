@@ -30,7 +30,7 @@ TotalDailyEnergy = total_daily_energy_ns.class_(
 
 
 def inherit_unit_of_measurement(uom, config):
-    return uom + "h"
+    return f"{uom}h"
 
 
 def inherit_accuracy_decimals(decimals, config):

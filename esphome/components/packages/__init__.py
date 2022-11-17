@@ -24,7 +24,7 @@ DOMAIN = CONF_PACKAGES
 
 def validate_git_package(config: dict):
     new_config = config
-    for key, conf in config.items():
+    for key, conf in new_config.items():
         if CONF_URL in conf:
             try:
                 conf = BASE_SCHEMA(conf)
@@ -64,12 +64,9 @@ def validate_source_shorthand(value):
             "Source is not a file system path or in expected github://username/name/[sub-folder/]file-path.yml[@branch-or-tag] format!"
         )
 
-    conf = {
-        CONF_URL: f"https://github.com/{m.group(1)}/{m.group(2)}.git",
-        CONF_FILE: m.group(3),
-    }
-    if m.group(4):
-        conf[CONF_REF] = m.group(4)
+    conf = {CONF_URL: f"https://github.com/{m[1]}/{m[2]}.git", CONF_FILE: m[3]}
+    if m[4]:
+        conf[CONF_REF] = m[4]
 
     # print(conf)
     return BASE_SCHEMA(conf)
